@@ -2,6 +2,7 @@
 #include <Game.h>
 #include <Texture.h>
 #include <Player.h>
+#include <Map.h>
 
 // Usual Global Variables
 SDL_Window* window = NULL;
@@ -17,6 +18,7 @@ Timer* timer = NULL;
 
 // Other Variables
 Player* cyborg;
+Map* map;
 
 int run()
 {
@@ -66,6 +68,10 @@ bool init()
 	cyborg = Player_create(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 	check(cyborg != NULL, "ERROR : Failed to initialize the Player!");
 	
+	// Creating the map
+	map = Map_create(0,0,SCREEN_WIDTH, SCREEN_HEIGHT);
+	check(map != NULL, "ERROR : Failed to initialize the Map!");
+	
 	
 	return true;
 error:
@@ -74,6 +80,7 @@ error:
 
 bool loadMedia()
 {
+	// Loading player sprites
 	bool r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Angry.png", PLAYER_IDLE);
 	check(r != false, "ERROR : Failed to load Player Texture")
 	
@@ -82,6 +89,10 @@ bool loadMedia()
 	
 	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Double_jump.png", PLAYER_JUMPING);
 	check(r != false, "ERROR : Failed to load Player Texture")
+	
+	// Loading map texture
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Background/background.png", MAP_BGTEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
 	
 	return true;
 error:
@@ -110,6 +121,9 @@ void render()
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer); // Clears the current frame
 	
+	// Map : to be drawn before the player
+	Map_render(map, renderer);
+	
 	cyborg->state = PLAYER_RUNNING;
 	// Render the cyborg
 	Player_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
@@ -127,6 +141,10 @@ void close()
 	// Destroy the Cyborg
 	free(cyborg);
 	cyborg = NULL;
+	
+	// Destroy the map
+	Map_destroy(map);
+	map = NULL;
 	
 	// Close our window and the renderer
 	SDL_DestroyWindow(window);

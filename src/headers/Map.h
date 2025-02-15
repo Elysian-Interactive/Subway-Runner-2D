@@ -6,17 +6,24 @@
 
 typedef enum Map_Textures{
 	MAP_BGTEXTURE, MAP_ALLTEXTURES
-};
+}Map_Textures;
+
+
+typedef struct Map_Object{
+	SDL_Rect Collider;
+}Map_Object;
 
 typedef struct Map{
-	SDL_Rect dimensions;
-	Texture* alltextures[MAP_ALLTEXTURES]
-	Queue* allcolliders;
-};
+	SDL_Rect dimension;
+	Texture map_textures[MAP_ALLTEXTURES];
+	Queue* all_colliders;
+}Map;
 
 Map* Map_create(int x, int y, int w, int h);
-void Map_loadTextures(Map* map, const char* filename, Map_Textures texture_type);
-void Map_render();
+bool Map_loadTexture(Map* map, SDL_Renderer* renderer, const char* filepath, Map_Textures texture_type);
+void Map_render(Map* map, SDL_Renderer* renderer);
+void Map_destroy(Map* map);
+
 
 
 #endif
