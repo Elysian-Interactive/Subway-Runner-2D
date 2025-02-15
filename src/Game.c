@@ -1,19 +1,22 @@
 #include <SDL2/SDL_mixer.h> 
 #include <Game.h>
 #include <Texture.h>
+#include <Player.h>
 
 // Usual Global Variables
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 360;
 
 TTF_Font* font = NULL;
 bool quit = false;
 
-// Texture Variable
+Timer* timer = NULL;
 
+// Other Variables
+Player* cyborg;
 
 int run()
 {
@@ -22,6 +25,9 @@ int run()
 	
 	r = loadMedia();
 	check(r == true, "Something went wrong");
+	
+	// Starting the timer
+	Timer_start(timer);
 	
 	while(!quit)
 	{	
@@ -52,6 +58,15 @@ bool init()
 	check(renderer != NULL, "Failed to create a renderer! SDL_Error: %s", SDL_GetError());
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	
+	// Creating the timer
+	timer = Timer_create();
+	check(timer != NULL, "ERROR : Failed to create the timer!");
+	
+	// Creating the player
+	cyborg = Player_create(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+	check(cyborg != NULL, "ERROR : Failed to initialize the Player!");
+	
+	
 	return true;
 error:
 	return false;
@@ -59,6 +74,14 @@ error:
 
 bool loadMedia()
 {
+	bool r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Angry.png", PLAYER_IDLE);
+	check(r != false, "ERROR : Failed to load Player Texture")
+	
+	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Run.png", PLAYER_RUNNING);
+	check(r != false, "ERROR : Failed to load Player Texture")
+	
+	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Double_jump.png", PLAYER_JUMPING);
+	check(r != false, "ERROR : Failed to load Player Texture")
 	
 	return true;
 error:
@@ -79,7 +102,7 @@ void handleEvents()
 
 void update()
 {
-
+	Player_animate(cyborg, timer);
 }
 
 void render()
@@ -87,12 +110,24 @@ void render()
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer); // Clears the current frame
 	
+	cyborg->state = PLAYER_RUNNING;
+	// Render the cyborg
+	Player_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
 	
 	SDL_RenderPresent(renderer); // Display the frame to the screen
 }
 
 void close()
 {
+	// Stopping the timer
+	Timer_stop(timer);
+	free(timer);
+	timer = NULL;
+	
+	// Destroy the Cyborg
+	free(cyborg);
+	cyborg = NULL;
+	
 	// Close our window and the renderer
 	SDL_DestroyWindow(window);
 	window = NULL;
