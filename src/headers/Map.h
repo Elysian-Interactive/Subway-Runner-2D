@@ -8,7 +8,6 @@ typedef enum Map_Textures{
 	MAP_BGTEXTURE, MAP_ALLTEXTURES
 }Map_Textures;
 
-
 typedef struct Map_Object{
 	SDL_Rect Collider;
 }Map_Object;
@@ -18,6 +17,8 @@ typedef struct Map{
 	Texture map_textures[MAP_ALLTEXTURES];
 	Queue* all_colliders;
 }Map;
+
+extern int gMap_scrolling_offset;
 
 Map* Map_create(int x, int y, int w, int h);
 bool Map_loadTexture(Map* map, SDL_Renderer* renderer, const char* filepath, Map_Textures texture_type);

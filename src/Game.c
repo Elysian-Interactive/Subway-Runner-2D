@@ -18,6 +18,7 @@ Timer* timer = NULL;
 
 // Other Variables
 Player* cyborg;
+Player* villian;
 Map* map;
 
 int run()
@@ -65,8 +66,11 @@ bool init()
 	check(timer != NULL, "ERROR : Failed to create the timer!");
 	
 	// Creating the player
-	cyborg = Player_create(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-	check(cyborg != NULL, "ERROR : Failed to initialize the Player!");
+	cyborg = Cyborg_create(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+	check(cyborg != NULL, "ERROR : Failed to initialize the Cyborg!");
+	
+	villian = Villian_create(SCREEN_WIDTH / 2 - (2 * cyborg->collider.w) , SCREEN_HEIGHT / 2 - cyborg->collider.h);
+	check(villian != NULL, "ERROR : Failed to initialize the Villian!");
 	
 	// Creating the map
 	map = Map_create(0,0,SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -89,6 +93,10 @@ bool loadMedia()
 	
 	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Double_jump.png", PLAYER_JUMPING);
 	check(r != false, "ERROR : Failed to load Player Texture")
+	
+	// Loading Villian Texture
+	r = Player_loadTexture(villian, renderer, "Assets/Textures/Villian/Special.png", PLAYER_IDLE);
+	check(r != false, "ERROR : Failed to load Player Texture");
 	
 	// Loading map texture
 	r = Map_loadTexture(map, renderer, "Assets/Textures/Background/background.png", MAP_BGTEXTURE);
@@ -114,6 +122,7 @@ void handleEvents()
 void update()
 {
 	Player_animate(cyborg, timer);
+	Player_animate(villian, timer);
 }
 
 void render()
@@ -124,9 +133,11 @@ void render()
 	// Map : to be drawn before the player
 	Map_render(map, renderer);
 	
-	cyborg->state = PLAYER_RUNNING;
+	// Render the villian
+	Villian_render(villian, renderer, villian->position.x, villian->position.y);
 	// Render the cyborg
-	Player_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
+	cyborg->state = PLAYER_RUNNING;
+	Cyborg_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
 	
 	SDL_RenderPresent(renderer); // Display the frame to the screen
 }
@@ -141,6 +152,10 @@ void close()
 	// Destroy the Cyborg
 	free(cyborg);
 	cyborg = NULL;
+	
+	// Destroy the Villian
+	free(villian);
+	villian = NULL;
 	
 	// Destroy the map
 	Map_destroy(map);

@@ -32,14 +32,7 @@ bool Texture_loadFromFile(SDL_Renderer* renderer, Texture* texture, const char* 
 	// Load the image at the specified path
 	SDL_Surface* loaded_surface = IMG_Load(filepath);
 	check(loaded_surface != NULL, "Failed to load the surface from %s! IMG_Error : %s", filepath, IMG_GetError());
-	
-	// Color keying the image
-	SDL_SetColorKey(loaded_surface, SDL_TRUE, SDL_MapRGB(loaded_surface->format, 0, 255, 255));
-	// Here we first provide the surface we want to color key, the we let SDL know that we want to enable
-	// color key and the last is the pixel we want to color key with
-	// Also the most cross platform way to create a pixel from the RGB is by using the SDL_MapRGB() function
-	// First we provide the format and then the corresponding RGB values
-	
+		
 	// Now to create a texture from surface pixels
 	new_texture = SDL_CreateTextureFromSurface(renderer, loaded_surface);
 	check(new_texture != NULL, "Failed to convert surface of %s to a texture! SDL_Error : %s", filepath, SDL_GetError());

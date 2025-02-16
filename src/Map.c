@@ -1,5 +1,7 @@
 #include <Map.h>
 
+int gMap_scrolling_offset = 0;
+
 Map* Map_create(int x, int y, int w, int h)
 {
 	Map* temp = calloc(1,sizeof(Map));
@@ -31,7 +33,13 @@ void Map_render(Map* map, SDL_Renderer* renderer)
 {
 	check(map != NULL, "ERROR : Invalid Map");
 	
-	Texture_render(renderer, &(map->map_textures[MAP_BGTEXTURE]), 0, 0, NULL);
+	gMap_scrolling_offset--;
+	if(gMap_scrolling_offset < -(Texture_getWidth(&(map->map_textures[MAP_BGTEXTURE])))){
+		gMap_scrolling_offset = 0;
+	}
+	
+	Texture_render(renderer, &(map->map_textures[MAP_BGTEXTURE]), gMap_scrolling_offset, 0, NULL);
+	Texture_render(renderer, &(map->map_textures[MAP_BGTEXTURE]), gMap_scrolling_offset + Texture_getWidth(&(map->map_textures[MAP_BGTEXTURE])), 0, NULL); 
 	
 error: // fallthrough
 	return;

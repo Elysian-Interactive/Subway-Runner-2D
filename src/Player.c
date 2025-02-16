@@ -1,6 +1,6 @@
 #include <Player.h>
 
-Player* Player_create(int x, int y)
+Player* Cyborg_create(int x, int y)
 {
 	Player* temp = calloc(1, sizeof(Player));
 	check(temp != NULL, "Failed to create Player!");
@@ -26,6 +26,32 @@ error:
 	return NULL;
 }
 
+Player* Villian_create(int x, int y)
+{
+	Player* temp = calloc(1, sizeof(Player));
+	check(temp != NULL, "Failed to create Player!");
+	
+	temp->state = PLAYER_IDLE;
+	
+	temp->position.x = x;
+	temp->position.y = y;
+	
+	temp->collider.x = x;
+	temp->collider.y = y;
+	temp->collider.w = 96;
+	temp->collider.h = 96;
+	
+	temp->animation_clip.x = 0;
+	temp->animation_clip.y = 0;
+	temp->animation_clip.w = 96;
+	temp->animation_clip.h = 96;
+	
+	
+	return temp;
+error:
+	return NULL;
+}
+
 bool Player_loadTexture(Player* player, SDL_Renderer* renderer, const char* filepath, Player_state state)
 {
 	check(player != NULL, "ERROR : Invalid Player!");
@@ -38,9 +64,24 @@ error:
 	return false;
 }
 
-void Player_render(Player* player, SDL_Renderer* renderer, int x, int y)
+void Cyborg_render(Player* player, SDL_Renderer* renderer, int x, int y)
 {
 	check(player != NULL, "ERROR : Invalid Player!");
+	if(player->state == PLAYER_IDLE){
+		Texture_renderEx(renderer, &(player->player_textures[player->state]), x, y, &player->animation_clip, 0, NULL, SDL_FLIP_HORIZONTAL);
+	}
+	else{
+		Texture_render(renderer, &(player->player_textures[player->state]), x, y, &player->animation_clip);
+	}
+	
+error: // fallthrough
+	return;
+}
+
+void Villian_render(Player* player, SDL_Renderer* renderer, int x, int y)
+{
+	check(player != NULL, "ERROR : Invalid Player!");
+	
 	Texture_render(renderer, &(player->player_textures[player->state]), x, y, &player->animation_clip);
 	
 error: // fallthrough
@@ -51,9 +92,9 @@ void Player_animate(Player* player, Timer* timer)
 {
 	check(player != NULL, "ERROR : Invalid Player!");
 	
-	int frames = (int)(Texture_getWidth(&(player->player_textures[player->state])) / 48);
+	int frames = (int)(Texture_getWidth(&(player->player_textures[player->state])) / player->collider.w);
 	
-	player->animation_clip.x = 48 * (int)((Timer_getTicks(timer) / 120) % frames);
+	player->animation_clip.x = player->collider.w * (int)((Timer_getTicks(timer) / 120) % frames);
 
 error: // fallthrough
 	return;

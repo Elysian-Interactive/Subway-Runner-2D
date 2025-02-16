@@ -21,9 +21,12 @@ typedef struct Player{
 	SDL_Rect animation_clip;
 }Player;
 
-Player* Player_create(int x, int y);
+Player* Cyborg_create(int x, int y);
+Player* Villian_create(int x, int y);
 bool Player_loadTexture(Player* player, SDL_Renderer* renderer, const char* filepath, Player_state state);
 void Player_render(Player* player, SDL_Renderer* renderer, int x, int y);
+void Cyborg_render(Player* player, SDL_Renderer* renderer, int x, int y);
+void Villian_render(Player* player, SDL_Renderer* renderer, int x, int y);
 void Player_animate(Player* player, Timer* timer);
 void Player_handleEvents(Player* player);
 void Player_move(Player* player);
