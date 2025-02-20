@@ -66,10 +66,10 @@ bool init()
 	check(timer != NULL, "ERROR : Failed to create the timer!");
 	
 	// Creating the player
-	cyborg = Cyborg_create(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+	cyborg = Cyborg_create(SCREEN_WIDTH / 6, SCREEN_HEIGHT / 2);
 	check(cyborg != NULL, "ERROR : Failed to initialize the Cyborg!");
 	
-	villian = Villian_create(SCREEN_WIDTH / 2 - (2 * cyborg->collider.w) , SCREEN_HEIGHT / 2 - cyborg->collider.h);
+	villian = Villian_create(SCREEN_WIDTH / 6 - (2 * cyborg->collider.w) , SCREEN_HEIGHT / 2 - cyborg->collider.h);
 	check(villian != NULL, "ERROR : Failed to initialize the Villian!");
 	
 	// Creating the map
@@ -108,7 +108,7 @@ bool loadMedia()
 	// TEMP : Checking Map Object functionality
 	Map_Object* train = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 2 - (Texture_getHeight(&(map->map_textures[MAP_TRAINTEXTURE]))), 446, 80, MAP_TRAINTEXTURE);
 	check(train != NULL, "ERROR : Failed to create the map object!");
-	Map_addObject(map, train);
+	Map_addObject(map, train, MAP_VEHICLE);
 	
 	
 	return true;
@@ -132,6 +132,8 @@ void update()
 {
 	Player_animate(cyborg, timer);
 	Player_animate(villian, timer);
+	
+	Map_despawnObjects(map);
 }
 
 void render()
