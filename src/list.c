@@ -3,7 +3,12 @@
 
 List* List_create()
 {
-	return calloc(1, sizeof(List)); // Used calloc because it zero-initialized the data structure
+	List* temp = calloc(1, sizeof(List));
+	check(temp != NULL, "ERROR : Failed to create the List!"); // Used calloc because it zero-initialized the data structure
+
+	return temp;
+error:	
+	return NULL; 
 }
 
 void List_destroy(List* list)
@@ -35,6 +40,8 @@ void List_clear_destroy(List* list)
 
 void List_push(List* list, void* value)
 {
+	check(list != NULL, "ERROR : Invalid List!");
+	
 	ListNode* node = calloc(1, sizeof(ListNode)); // first we create a new node
 	check_mem(node); // safety measure
 	

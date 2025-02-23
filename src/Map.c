@@ -1,10 +1,12 @@
 #include <Map.h>
 
 int gMap_scrolling_offset = 0;
+int gMap_vehicles_speed_offset = 2; 
+int gMap_stationary_objects_speed_offset = 1;
 
 Map* Map_create(int x, int y, int w, int h)
 {
-	Map* temp = calloc(1,sizeof(Map));
+	Map* temp = malloc(sizeof(Map));
 	check(temp != NULL, "ERROR : Failed to creat the Map!");
 	
 	temp->dimension.x = x;
@@ -48,7 +50,7 @@ void Map_render(Map* map, SDL_Renderer* renderer)
 	check(map->map_obstacles != NULL, "ERROR : Invalid Obstacles Queue!");
 	check(map->map_collectibles != NULL, "ERROR : Invalid Collectibles Queue!");
 	
-	gMap_scrolling_offset--;
+	gMap_scrolling_offset -= gMap_stationary_objects_speed_offset;
 	if(gMap_scrolling_offset < -(Texture_getWidth(&(map->map_textures[MAP_BGTEXTURE])))){
 		gMap_scrolling_offset = 0;
 	}
@@ -63,24 +65,19 @@ void Map_render(Map* map, SDL_Renderer* renderer)
 			Texture_render(renderer, &(map->map_textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
 			// In order to move them I decrease the x coordinate by a given number
 		}
-		// Values have to decremented regardless whether they are being renderer or not
-		MO(cur->value)->collider.x -= 2;
 	}
 }
 
 {	// Rendering all the Map Obstacles
 	QUEUE_FOREACH(map->map_obstacles, cur){
 		Texture_render(renderer, &(map->map_textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
-		// In order to move them I decrease the x coordinate by a given number
-		MO(cur->value)->collider.x -= 1;
+		
 	}
 }
 
 {	// Rendering all the Map Collectibles
 	QUEUE_FOREACH(map->map_collectibles, cur){
 		Texture_render(renderer, &(map->map_textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
-		// In order to move them I decrease the x coordinate by a given number
-		MO(cur->value)->collider.x -= 1;
 	}
 }
 
@@ -125,7 +122,7 @@ error:
 	return NULL;
 }
 
-void Map_addObject(Map* map, Map_Object* object, Map_ObjectType type )
+void Map_addObject(Map* map, Map_Object* object, Map_ObjectType type)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	check(object != NULL, "ERROR : Invalid Object!");
@@ -158,41 +155,44 @@ void Map_destroyObject(Map_Object* object)
 void Map_despawnObjects(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
-	check(map->map_vehicles != NULL, "ERROR : Invalid Vehicles Queue!");
-	check(map->map_obstacles != NULL, "ERROR : Invalid Obstacles Queue!");
-	check(map->map_collectibles != NULL, "ERROR : Invalid Collectibles Queue!");
 	
-	// Variable to hold the no. of pops to be done
-	int no_despawn = 0;
+	// Despawing from all the queues and moving them to the left by the speed offset
 	
-{ 	// Rendering all the Map Vehicles
-	QUEUE_FOREACH(map->map_vehicles, cur){
-		if(MO(cur->value)->collider.x < 10 /*-(Texture_getWidth(&(map->map_textures[MO(cur->value)->texture_type])))*/){
-			MO(cur->value)->to_render = false;
-			no_despawn++;
-		}
-	}
-	
-	/*
-	for(int i = 0;i < no_despawn;i++){
-		Map_destroyObject(MO(Queue_pop(map->map_vehicles)));
-	}
-	*/
-}
-
-{	// Rendering all the Map Obstacles
-	QUEUE_FOREACH(map->map_obstacles, cur){
-	
-	}
-}
-
-{	// Rendering all the Map Collectibles
-	QUEUE_FOREACH(map->map_vehicles, cur){
-		
-	}
-}
+	// Since vehicles have to go fast the offset is bigger
+	Map_despawnFromQueue(map, map->map_vehicles,"Vehicles", gMap_vehicles_speed_offset); 
+	// Since obstacles and collectible will be stationary the offset is same as the background offset
+	Map_despawnFromQueue(map, map->map_obstacles,"Obstacles", gMap_stationary_objects_speed_offset); 
+	Map_despawnFromQueue(map, map->map_collectibles,"Collectibles", gMap_stationary_objects_speed_offset);
 
 error:
 	return;
 
+}
+
+void Map_despawnFromQueue(Map* map, Queue* q, const char* queue_name, int speed_offset)
+{
+	check(q != NULL, "ERROR : Invalid %s Queue", queue_name);
+	
+	int no_despawn = 0;
+	
+	// Switching off rendering on objects out of the screen
+	QUEUE_FOREACH(q, cur){
+		if(MO(cur->value)->collider.x < -((int)Texture_getWidth(&(map->map_textures[MO(cur->value)->texture_type])))){
+			MO(cur->value)->to_render = false;
+			no_despawn++;
+		}
+		else{
+			// We decrement the postion of the objects by the given offset
+			// Values have to decremented regardless whether they are being renderer or not
+			MO(cur->value)->collider.x -= speed_offset;
+		}
+	}
+	// Cleaning up the objects to be despawned
+	for(int i = 0;i < no_despawn;i++){
+		Map_destroyObject(MO(Queue_pop(q)));
+		// log_info("[INFO] : Items in Vehicle Queue : %d",Queue_count(map->map_vehicles));
+	}
+	
+error:
+	return;
 }

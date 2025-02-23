@@ -102,14 +102,27 @@ bool loadMedia()
 	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Background/background.png", MAP_BGTEXTURE);
 	check(r != false, "ERROR : Failed to load Map Texture");
 	
-	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Objects/Train.png", MAP_TRAINTEXTURE);
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Vehicles/Train.png", MAP_TRAINTEXTURE);
 	check(r != false, "ERROR : Failed to load Map Texture");
 	
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Obstacles/2.png", MAP_FENCETEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
+	
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Collectibles/tile.png", MAP_MONEYTEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
+
 	// TEMP : Checking Map Object functionality
 	Map_Object* train = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 2 - (Texture_getHeight(&(map->map_textures[MAP_TRAINTEXTURE]))), 446, 80, MAP_TRAINTEXTURE);
 	check(train != NULL, "ERROR : Failed to create the map object!");
 	Map_addObject(map, train, MAP_VEHICLE);
 	
+	Map_Object* fence = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 3 -  (Texture_getHeight(&(map->map_textures[MAP_FENCETEXTURE]))), 48, 22, MAP_FENCETEXTURE);
+	check(fence != NULL, "ERROR : Failed to create the map object!");
+	Map_addObject(map, fence, MAP_OBSTACLE);
+	
+	Map_Object* tile = Map_createObject(SCREEN_WIDTH, (int)(SCREEN_HEIGHT / 1.5) -  (Texture_getHeight(&(map->map_textures[MAP_MONEYTEXTURE]))), 32, 32, MAP_MONEYTEXTURE);
+	check(tile != NULL, "ERROR : Failed to create the map object!");
+	Map_addObject(map, tile, MAP_COLLECTIBLE);
 	
 	return true;
 error:
