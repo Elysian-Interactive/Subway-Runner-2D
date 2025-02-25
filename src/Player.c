@@ -2,8 +2,11 @@
 
 Player* Cyborg_create(int x, int y)
 {
-	Player* temp = calloc(1, sizeof(Player));
+	Player* temp = malloc(sizeof(Player));
 	check(temp != NULL, "Failed to create Player!");
+	
+	temp->player_textures = calloc(PLAYER_ALLSTATES, sizeof(Texture));
+	check(temp->player_textures != NULL, "ERROR : Failed to allocate memory to player textures!");
 	
 	temp->state = PLAYER_IDLE;
 	
@@ -28,8 +31,11 @@ error:
 
 Player* Villian_create(int x, int y)
 {
-	Player* temp = calloc(1, sizeof(Player));
+	Player* temp = malloc(sizeof(Player));
 	check(temp != NULL, "Failed to create Player!");
+	
+	temp->player_textures = calloc(PLAYER_ALLSTATES, sizeof(Texture));
+	check(temp->player_textures != NULL, "ERROR : Failed to allocate memory to player textures!");
 	
 	temp->state = PLAYER_IDLE;
 	
@@ -56,7 +62,7 @@ bool Player_loadTexture(Player* player, SDL_Renderer* renderer, const char* file
 {
 	check(player != NULL, "ERROR : Invalid Player!");
 	
-	bool r = Texture_loadFromFile(renderer, &player->player_textures[state], filepath);
+	bool r = Texture_loadFromFile(renderer, &(player->player_textures[state]), filepath);
 	check(r != false, "ERROR : Failed to load the texture : %s", filepath);
 	
 	return true;

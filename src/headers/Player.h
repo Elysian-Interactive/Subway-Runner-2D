@@ -14,7 +14,7 @@ typedef enum Player_state{
 }Player_state;
 
 typedef struct Player{
-	Texture player_textures[PLAYER_ALLSTATES];
+	Texture* player_textures;
 	Player_state state;
 	SDL_Rect collider;
 	SDL_Point position;

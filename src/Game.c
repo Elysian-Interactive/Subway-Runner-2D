@@ -9,12 +9,19 @@ SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
 const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 360;
+const int SCREEN_HEIGHT = 480;
 
 TTF_Font* font = NULL;
 bool quit = false;
 
 Timer* timer = NULL;
+
+// FPS Capping logic
+const int SCREEN_FPS = 60; 
+const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
+Timer* fps_timer = NULL; 
+Timer* cap_timer = NULL;
+int counted_frames = 0;
 
 // Other Variables
 Player* cyborg;
@@ -31,9 +38,12 @@ int run()
 	
 	// Starting the timer
 	Timer_start(timer);
+	Timer_start(fps_timer);
 	
 	while(!quit)
 	{	
+		Timer_start(cap_timer);
+		
 		handleEvents();
 		update();
 		render();	
@@ -54,10 +64,10 @@ bool init()
 	check(TTF_Init() != -1, "Failed to intialzie SDL_ttf! TTF_Error: %s", TTF_GetError()); 
 	check(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) >= 0, "Failed to initialize SDL_mixer! Mix_Error: %s", Mix_GetError());
 	
-	window = SDL_CreateWindow("Subway Runner",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH,SCREEN_HEIGHT,SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("Subway Runner",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH,SCREEN_HEIGHT,SDL_WINDOW_FULLSCREEN);
 	check(window != NULL, "Failed to create a window! SDL_Error: %s", SDL_GetError());
 	
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	check(renderer != NULL, "Failed to create a renderer! SDL_Error: %s", SDL_GetError());
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	
@@ -65,11 +75,19 @@ bool init()
 	timer = Timer_create();
 	check(timer != NULL, "ERROR : Failed to create the timer!");
 	
+	// Creating our FPS timers
+	fps_timer = Timer_create();
+	check(fps_timer != NULL, "ERROR : Failed to create the FPS timer!");
+	
+	cap_timer = Timer_create();
+	check(cap_timer != NULL, "ERROR : Failed to create the CAP timer!");
+	
 	// Creating the player
-	cyborg = Cyborg_create(SCREEN_WIDTH / 6, SCREEN_HEIGHT / 2);
+	cyborg = Cyborg_create(0, 0);
 	check(cyborg != NULL, "ERROR : Failed to initialize the Cyborg!");
 	
-	villian = Villian_create(SCREEN_WIDTH / 6 - (2 * cyborg->collider.w) , SCREEN_HEIGHT / 2 - cyborg->collider.h);
+	// villian = Villian_create(SCREEN_WIDTH / 6 - (2 * cyborg->collider.w) , SCREEN_HEIGHT / 2 - cyborg->collider.h);
+	villian = Villian_create(100, 100);
 	check(villian != NULL, "ERROR : Failed to initialize the Villian!");
 	
 	// Creating the map
@@ -105,24 +123,24 @@ bool loadMedia()
 	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Vehicles/Train.png", MAP_TRAINTEXTURE);
 	check(r != false, "ERROR : Failed to load Map Texture");
 	
-	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Obstacles/Fence.png", MAP_FENCETEXTURE);
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Obstacles/Coach.png", MAP_COACHTEXTURE);
 	check(r != false, "ERROR : Failed to load Map Texture");
 	
 	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Collectibles/Money.png", MAP_MONEYTEXTURE);
 	check(r != false, "ERROR : Failed to load Map Texture");
 
 	// TEMP : Checking Map Object functionality
-	Map_Object* train = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 2 - (Texture_getHeight(&(map->map_textures[MAP_TRAINTEXTURE]))), 446, 80, MAP_TRAINTEXTURE);
+	Map_Object* train = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 2 - (Texture_getHeight(&(map->textures[MAP_TRAINTEXTURE]))), 446, 80, MAP_TRAINTEXTURE);
 	check(train != NULL, "ERROR : Failed to create the map object!");
 	Map_addObject(map, train, MAP_VEHICLE);
 	
-	Map_Object* fence = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 3 -  (Texture_getHeight(&(map->map_textures[MAP_FENCETEXTURE]))), 16, 53, MAP_FENCETEXTURE);
-	check(fence != NULL, "ERROR : Failed to create the map object!");
-	Map_addObject(map, fence, MAP_OBSTACLE);
+	Map_Object* coach = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 3 -  (Texture_getHeight(&(map->textures[MAP_COACHTEXTURE]))), 206, 57, MAP_COACHTEXTURE);
+	check(coach != NULL, "ERROR : Failed to create the map object!");
+	Map_addObject(map, coach, MAP_OBSTACLE);
 	
-	Map_Object* tile = Map_createObject(SCREEN_WIDTH, (int)(SCREEN_HEIGHT / 1.5) -  (Texture_getHeight(&(map->map_textures[MAP_MONEYTEXTURE]))), 24, 24, MAP_MONEYTEXTURE);
-	check(tile != NULL, "ERROR : Failed to create the map object!");
-	Map_addObject(map, tile, MAP_COLLECTIBLE);
+	Map_Object* money = Map_createObject(SCREEN_WIDTH, (int)(SCREEN_HEIGHT / 1.5) -  (Texture_getHeight(&(map->textures[MAP_MONEYTEXTURE]))), 24, 24, MAP_MONEYTEXTURE);
+	check(money != NULL, "ERROR : Failed to create the map object!");
+	Map_addObject(map, money, MAP_COLLECTIBLE);
 	
 	return true;
 error:
@@ -164,6 +182,13 @@ void render()
 	Cyborg_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
 	
 	SDL_RenderPresent(renderer); // Display the frame to the screen
+
+	// if frame finished early we want to cap it
+	int frame_ticks = Timer_getTicks(cap_timer);
+	if(frame_ticks < SCREEN_TICKS_PER_FRAME){
+		// Wait the remaining time
+		SDL_Delay(SCREEN_TICKS_PER_FRAME - frame_ticks);
+	}
 }
 
 void close()

@@ -10,7 +10,7 @@
 typedef enum Map_Texture{
 	MAP_BGTEXTURE, 
 	MAP_TRAINTEXTURE, 
-	MAP_FENCETEXTURE,
+	MAP_COACHTEXTURE,
 	MAP_MONEYTEXTURE,
 	MAP_ALLTEXTURES
 }Map_Texture;
@@ -30,10 +30,10 @@ typedef struct Map_Object{
 
 typedef struct Map{
 	SDL_Rect dimension;
-	Texture map_textures[MAP_ALLTEXTURES];
-	Queue* map_vehicles;
-	Queue* map_obstacles;
-	Queue* map_collectibles;
+	Texture* textures;
+	Queue* vehicles;
+	Queue* obstacles;
+	Queue* collectibles;
 }Map;
 
 extern int gMap_vehicles_speed_offset; // Determines how fast the vehicles should move
@@ -49,7 +49,7 @@ void Map_despawnFromQueue(Map* map, Queue* q, const char* queue_name, int speed_
 void Map_destroyObject(Map_Object* object);
 bool Map_loadTexture(Map* map, SDL_Renderer* renderer, const char* filepath, Map_Texture type);
 void Map_render(Map* map, SDL_Renderer* renderer);
-void Map_renderQueue(Queue* q, SDL_Renderer* renderer); // Map Rendering helper function for rendering individual queues
+void Map_renderQueue(Map* map,Queue* q, SDL_Renderer* renderer); // Map Rendering helper function for rendering individual queues
 void Map_destroy(Map* map);
 
 

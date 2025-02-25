@@ -14,17 +14,20 @@ Map* Map_create(int x, int y, int w, int h)
 	temp->dimension.w = w;
 	temp->dimension.h = h;
 	
+	temp->textures = calloc(MAP_ALLTEXTURES, sizeof(Texture));
+	check(temp->textures != NULL, "ERROR : Failed to allocate memory to textures");
+	
 	// Creating three queues to hold different types of objects
 	// i.e. 1. Vehicles 2. Obstacles 3. Collectibles
 	
-	temp->map_vehicles = Queue_create();
-	check(temp->map_vehicles != NULL, "ERROR : Failed to create the Vehicles Queue!");
+	temp->vehicles = Queue_create();
+	check(temp->vehicles != NULL, "ERROR : Failed to create the Vehicles Queue!");
 	
-	temp->map_obstacles = Queue_create();
-	check(temp->map_obstacles != NULL, "ERROR : Failed to create the Obstacles Queue!");
+	temp->obstacles = Queue_create();
+	check(temp->obstacles != NULL, "ERROR : Failed to create the Obstacles Queue!");
 	
-	temp->map_collectibles = Queue_create();
-	check(temp->map_collectibles != NULL, "ERROR : Failed to create the Collectibles Queue!");
+	temp->collectibles = Queue_create();
+	check(temp->collectibles != NULL, "ERROR : Failed to create the Collectibles Queue!");
 	
 	return temp;
 error:
@@ -35,7 +38,7 @@ bool Map_loadTexture(Map* map, SDL_Renderer* renderer, const char* filepath, Map
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
-	bool r = Texture_loadFromFile(renderer, &(map->map_textures[type]), filepath);
+	bool r = Texture_loadFromFile(renderer, &(map->textures[type]), filepath);
 	check(r != false, "ERROR : Failed to load the texture : %s", filepath);
 	
 	return true;
@@ -46,57 +49,49 @@ error:
 void Map_render(Map* map, SDL_Renderer* renderer)
 {
 	check(map != NULL, "ERROR : Invalid Map");
-	check(map->map_vehicles != NULL, "ERROR : Invalid Vehicles Queue!");
-	check(map->map_obstacles != NULL, "ERROR : Invalid Obstacles Queue!");
-	check(map->map_collectibles != NULL, "ERROR : Invalid Collectibles Queue!");
+	check(map->vehicles != NULL, "ERROR : Invalid Vehicles Queue!");
+	check(map->obstacles != NULL, "ERROR : Invalid Obstacles Queue!");
+	check(map->collectibles != NULL, "ERROR : Invalid Collectibles Queue!");
 	
 	gMap_scrolling_offset -= gMap_stationary_objects_speed_offset;
-	if(gMap_scrolling_offset < -(Texture_getWidth(&(map->map_textures[MAP_BGTEXTURE])))){
+	if(gMap_scrolling_offset < -(Texture_getWidth(&(map->textures[MAP_BGTEXTURE])))){
 		gMap_scrolling_offset = 0;
 	}
 	// Rendering the background
-	Texture_render(renderer, &(map->map_textures[MAP_BGTEXTURE]), gMap_scrolling_offset, 0, NULL);
-	Texture_render(renderer, &(map->map_textures[MAP_BGTEXTURE]), gMap_scrolling_offset + Texture_getWidth(&(map->map_textures[MAP_BGTEXTURE])), 0, NULL); 
+	Texture_render(renderer, &(map->textures[MAP_BGTEXTURE]), gMap_scrolling_offset, 0, NULL);
+	Texture_render(renderer, &(map->textures[MAP_BGTEXTURE]), gMap_scrolling_offset + Texture_getWidth(&(map->textures[MAP_BGTEXTURE])), 0, NULL); 
+
+	// Rendering through the various object queues
 	
-	
-{ 	// Rendering all the Map Vehicles
-	QUEUE_FOREACH(map->map_vehicles, cur){
+	Map_renderQueue(map,map->obstacles, renderer);
+	Map_renderQueue(map,map->collectibles, renderer);
+	Map_renderQueue(map,map->vehicles, renderer);
+
+error:
+	return;
+}
+
+void Map_renderQueue(Map* map, Queue* q, SDL_Renderer* renderer)
+{	
+	// Rendering all the Map Vehicles
+	QUEUE_FOREACH(q, cur){
 		if(MO(cur->value)->to_render){
-			Texture_render(renderer, &(map->map_textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
-			// In order to move them I decrease the x coordinate by a given number
+			Texture_render(renderer, &(map->textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
 		}
 	}
-}
-
-{	// Rendering all the Map Obstacles
-	QUEUE_FOREACH(map->map_obstacles, cur){
-		Texture_render(renderer, &(map->map_textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
-		
-	}
-}
-
-{	// Rendering all the Map Collectibles
-	QUEUE_FOREACH(map->map_collectibles, cur){
-		Texture_render(renderer, &(map->map_textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
-	}
-}
-
-	
-error: // fallthrough
-	return;
 }
 
 void Map_destroy(Map* map)
 {
 	if(map){
-		if(map->map_vehicles){
-			Queue_destroy(map->map_vehicles);
+		if(map->vehicles){
+			Queue_destroy(map->vehicles);
 		}
-		if(map->map_obstacles){
-			Queue_destroy(map->map_obstacles);
+		if(map->obstacles){
+			Queue_destroy(map->obstacles);
 		}
-		if(map->map_collectibles){
-			Queue_destroy(map->map_collectibles);
+		if(map->collectibles){
+			Queue_destroy(map->collectibles);
 		}
 		
 		free(map);
@@ -130,13 +125,13 @@ void Map_addObject(Map* map, Map_Object* object, Map_ObjectType type)
 	// Simply add it in the suitable queue
 	switch(type){
 		case MAP_VEHICLE:
-			Queue_push(map->map_vehicles, object);
+			Queue_push(map->vehicles, object);
 			break;
 		case MAP_OBSTACLE:
-			Queue_push(map->map_obstacles, object);
+			Queue_push(map->obstacles, object);
 			break;
 		case MAP_COLLECTIBLE:
-			Queue_push(map->map_collectibles, object);
+			Queue_push(map->collectibles, object);
 			break;
 	}
 		
@@ -159,10 +154,10 @@ void Map_despawnObjects(Map* map)
 	// Despawing from all the queues and moving them to the left by the speed offset
 	
 	// Since vehicles have to go fast the offset is bigger
-	Map_despawnFromQueue(map, map->map_vehicles,"Vehicles", gMap_vehicles_speed_offset); 
+	Map_despawnFromQueue(map, map->vehicles,"Vehicles", gMap_vehicles_speed_offset); 
 	// Since obstacles and collectible will be stationary the offset is same as the background offset
-	Map_despawnFromQueue(map, map->map_obstacles,"Obstacles", gMap_stationary_objects_speed_offset); 
-	Map_despawnFromQueue(map, map->map_collectibles,"Collectibles", gMap_stationary_objects_speed_offset);
+	Map_despawnFromQueue(map, map->obstacles,"Obstacles", gMap_stationary_objects_speed_offset); 
+	Map_despawnFromQueue(map, map->collectibles,"Collectibles", gMap_stationary_objects_speed_offset);
 
 error:
 	return;
@@ -177,7 +172,7 @@ void Map_despawnFromQueue(Map* map, Queue* q, const char* queue_name, int speed_
 	
 	// Switching off rendering on objects out of the screen
 	QUEUE_FOREACH(q, cur){
-		if(MO(cur->value)->collider.x < -((int)Texture_getWidth(&(map->map_textures[MO(cur->value)->texture_type])))){
+		if(MO(cur->value)->collider.x < -((int)Texture_getWidth(&(map->textures[MO(cur->value)->texture_type])))){
 			MO(cur->value)->to_render = false;
 			no_despawn++;
 		}
