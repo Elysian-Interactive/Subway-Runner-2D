@@ -3,6 +3,16 @@
 
 #include <Texture.h>
 #include <Queue.h>
+#include <Player.h>
+
+#define MAP_WIDTH 640
+#define MAP_HEIGHT 360
+
+#define LANEPOS_1 92
+#define LANEPOS_2 168
+#define LANEPOS_3 244
+#define LANE_WIDTH 29
+
 
 // Macro for easily typing complex casts on queue object
 #define MO(V) ((Map_Object*)V)
@@ -48,7 +58,8 @@ void Map_despawnObjects(Map* map); // All the logic for despawing and cleaning u
 void Map_despawnFromQueue(Map* map, Queue* q, const char* queue_name, int speed_offset); // Despawn Helper function to clear objects from a queue
 void Map_destroyObject(Map_Object* object);
 bool Map_loadTexture(Map* map, SDL_Renderer* renderer, const char* filepath, Map_Texture type);
-void Map_render(Map* map, SDL_Renderer* renderer);
+bool Map_loadAllMedia(Map* map, SDL_Renderer* renderer);
+void Map_render(Map* map, Player* cyborg, Player* villian, SDL_Renderer* renderer);
 void Map_renderQueue(Map* map,Queue* q, SDL_Renderer* renderer); // Map Rendering helper function for rendering individual queues
 void Map_destroy(Map* map);
 

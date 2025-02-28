@@ -46,12 +46,32 @@ error:
 	return false;
 }
 
-void Map_render(Map* map, SDL_Renderer* renderer)
+bool Map_loadAllMedia(Map* map, SDL_Renderer* renderer)
+{
+	bool r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Background/background2.png", MAP_BGTEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
+	
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Vehicles/Train.png", MAP_TRAINTEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
+	
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Obstacles/Coach2.png", MAP_COACHTEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
+	
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Collectibles/Money.png", MAP_MONEYTEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
+
+error:
+	return r;
+}
+
+void Map_render(Map* map, Player* cyborg, Player* villian, SDL_Renderer* renderer)
 {
 	check(map != NULL, "ERROR : Invalid Map");
 	check(map->vehicles != NULL, "ERROR : Invalid Vehicles Queue!");
 	check(map->obstacles != NULL, "ERROR : Invalid Obstacles Queue!");
 	check(map->collectibles != NULL, "ERROR : Invalid Collectibles Queue!");
+	check(cyborg != NULL, "ERROR : Invalid Cyborg Player!");
+	check(villian != NULL, "ERROR : Invalid Villian Player!");
 	
 	gMap_scrolling_offset -= gMap_stationary_objects_speed_offset;
 	if(gMap_scrolling_offset < -(Texture_getWidth(&(map->textures[MAP_BGTEXTURE])))){
@@ -62,9 +82,15 @@ void Map_render(Map* map, SDL_Renderer* renderer)
 	Texture_render(renderer, &(map->textures[MAP_BGTEXTURE]), gMap_scrolling_offset + Texture_getWidth(&(map->textures[MAP_BGTEXTURE])), 0, NULL); 
 
 	// Rendering through the various object queues
+	Map_renderQueue(map,map->collectibles, renderer);
+	
+	// Render the villian
+	// Villian_render(villian, renderer, villian->position.x, villian->position.y);
+	// Render the cyborg
+	cyborg->state = PLAYER_RUNNING;
+	Cyborg_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
 	
 	Map_renderQueue(map,map->obstacles, renderer);
-	Map_renderQueue(map,map->collectibles, renderer);
 	Map_renderQueue(map,map->vehicles, renderer);
 
 error:
@@ -137,6 +163,11 @@ void Map_addObject(Map* map, Map_Object* object, Map_ObjectType type)
 		
 error:
 	return;
+}
+
+void Map_spawnObjects(Map* map)
+{
+	
 }
 
 // Simple Function to Deallocate memory from the Map Object datatype

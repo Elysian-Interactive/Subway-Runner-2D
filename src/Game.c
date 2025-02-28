@@ -64,7 +64,7 @@ bool init()
 	check(TTF_Init() != -1, "Failed to intialzie SDL_ttf! TTF_Error: %s", TTF_GetError()); 
 	check(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) >= 0, "Failed to initialize SDL_mixer! Mix_Error: %s", Mix_GetError());
 	
-	window = SDL_CreateWindow("Subway Runner",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH,SCREEN_HEIGHT,SDL_WINDOW_FULLSCREEN);
+	window = SDL_CreateWindow("Subway Runner",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,SCREEN_WIDTH,SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 	check(window != NULL, "Failed to create a window! SDL_Error: %s", SDL_GetError());
 	
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -83,11 +83,11 @@ bool init()
 	check(cap_timer != NULL, "ERROR : Failed to create the CAP timer!");
 	
 	// Creating the player
-	cyborg = Cyborg_create(0, 0);
+	cyborg = Cyborg_create(100, (int)(LANEPOS_2 + LANE_WIDTH / 2));
 	check(cyborg != NULL, "ERROR : Failed to initialize the Cyborg!");
 	
-	// villian = Villian_create(SCREEN_WIDTH / 6 - (2 * cyborg->collider.w) , SCREEN_HEIGHT / 2 - cyborg->collider.h);
-	villian = Villian_create(100, 100);
+	villian = Villian_create(SCREEN_WIDTH / 6 - (2 * cyborg->collider.w) , SCREEN_HEIGHT / 2 - cyborg->collider.h);
+	// villian = Villian_create(100, 100);
 	check(villian != NULL, "ERROR : Failed to initialize the Villian!");
 	
 	// Creating the map
@@ -102,43 +102,26 @@ error:
 
 bool loadMedia()
 {
-	// Loading player sprites
-	bool r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Angry.png", PLAYER_IDLE);
-	check(r != false, "ERROR : Failed to load Player Texture")
-	
-	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Run.png", PLAYER_RUNNING);
-	check(r != false, "ERROR : Failed to load Player Texture")
-	
-	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Double_jump.png", PLAYER_JUMPING);
-	check(r != false, "ERROR : Failed to load Player Texture")
+	// Loading player media
+	bool r = Cyborg_loadAllMedia(cyborg, renderer);
 	
 	// Loading Villian Texture
 	r = Player_loadTexture(villian, renderer, "Assets/Textures/Villian/Special.png", PLAYER_IDLE);
 	check(r != false, "ERROR : Failed to load Player Texture");
 	
-	// Loading map texture
-	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Background/background.png", MAP_BGTEXTURE);
-	check(r != false, "ERROR : Failed to load Map Texture");
-	
-	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Vehicles/Train.png", MAP_TRAINTEXTURE);
-	check(r != false, "ERROR : Failed to load Map Texture");
-	
-	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Obstacles/Coach.png", MAP_COACHTEXTURE);
-	check(r != false, "ERROR : Failed to load Map Texture");
-	
-	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Collectibles/Money.png", MAP_MONEYTEXTURE);
-	check(r != false, "ERROR : Failed to load Map Texture");
+	// Loading map media
+	r = Map_loadAllMedia(map, renderer);
 
 	// TEMP : Checking Map Object functionality
-	Map_Object* train = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 2 - (Texture_getHeight(&(map->textures[MAP_TRAINTEXTURE]))), 446, 80, MAP_TRAINTEXTURE);
+	Map_Object* train = Map_createObject(SCREEN_WIDTH, LANEPOS_1 - 33, 446, 80, MAP_TRAINTEXTURE);
 	check(train != NULL, "ERROR : Failed to create the map object!");
 	Map_addObject(map, train, MAP_VEHICLE);
 	
-	Map_Object* coach = Map_createObject(SCREEN_WIDTH, SCREEN_HEIGHT / 3 -  (Texture_getHeight(&(map->textures[MAP_COACHTEXTURE]))), 206, 57, MAP_COACHTEXTURE);
+	Map_Object* coach = Map_createObject(SCREEN_WIDTH, LANEPOS_3 - 33, 206, 57, MAP_COACHTEXTURE);
 	check(coach != NULL, "ERROR : Failed to create the map object!");
 	Map_addObject(map, coach, MAP_OBSTACLE);
 	
-	Map_Object* money = Map_createObject(SCREEN_WIDTH, (int)(SCREEN_HEIGHT / 1.5) -  (Texture_getHeight(&(map->textures[MAP_MONEYTEXTURE]))), 24, 24, MAP_MONEYTEXTURE);
+	Map_Object* money = Map_createObject(SCREEN_WIDTH, LANEPOS_2 - 8, 24, 24, MAP_MONEYTEXTURE);
 	check(money != NULL, "ERROR : Failed to create the map object!");
 	Map_addObject(map, money, MAP_COLLECTIBLE);
 	
@@ -156,11 +139,16 @@ void handleEvents()
 			quit = true;
 		}
 		
+		Player_handleEvents(cyborg, &e);
+		
 	}	
 }
 
 void update()
 {
+	// Update Player Position
+	Player_move(cyborg, (int)(cyborg->lane + LANE_WIDTH / 2));
+	
 	Player_animate(cyborg, timer);
 	Player_animate(villian, timer);
 	
@@ -173,13 +161,7 @@ void render()
 	SDL_RenderClear(renderer); // Clears the current frame
 	
 	// Map : to be drawn before the player
-	Map_render(map, renderer);
-	
-	// Render the villian
-	Villian_render(villian, renderer, villian->position.x, villian->position.y);
-	// Render the cyborg
-	cyborg->state = PLAYER_RUNNING;
-	Cyborg_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
+	Map_render(map, cyborg, villian, renderer);
 	
 	SDL_RenderPresent(renderer); // Display the frame to the screen
 

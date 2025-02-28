@@ -10,19 +10,21 @@ Player* Cyborg_create(int x, int y)
 	
 	temp->state = PLAYER_IDLE;
 	
-	temp->position.x = x;
-	temp->position.y = y;
-	
-	temp->collider.x = x;
-	temp->collider.y = y;
 	temp->collider.w = 48;
 	temp->collider.h = 48;
-	
+
 	temp->animation_clip.x = 0;
 	temp->animation_clip.y = 0;
 	temp->animation_clip.w = 48;
 	temp->animation_clip.h = 48;
 	
+	temp->position.x = x;
+	temp->position.y = y - temp->collider.h;
+	
+	temp->collider.x = x;
+	temp->collider.y = temp->position.y;
+	
+	temp->lane = LANEPOS_2;
 	
 	return temp;
 error:
@@ -70,6 +72,21 @@ error:
 	return false;
 }
 
+bool Cyborg_loadAllMedia(Player* cyborg, SDL_Renderer* renderer)
+{
+	bool r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Angry.png", PLAYER_IDLE);
+	check(r != false, "ERROR : Failed to load Player Texture");
+	
+	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Run.png", PLAYER_RUNNING);
+	check(r != false, "ERROR : Failed to load Player Texture");
+	
+	r = Player_loadTexture(cyborg, renderer, "Assets/Textures/Cyborg/Double_jump.png", PLAYER_JUMPING);
+	check(r != false, "ERROR : Failed to load Player Texture");
+
+error: // fallthrough
+	return r;
+}
+
 void Cyborg_render(Player* player, SDL_Renderer* renderer, int x, int y)
 {
 	check(player != NULL, "ERROR : Invalid Player!");
@@ -103,5 +120,58 @@ void Player_animate(Player* player, Timer* timer)
 	player->animation_clip.x = player->collider.w * (int)((Timer_getTicks(timer) / 120) % frames);
 
 error: // fallthrough
+	return;
+}
+
+void Player_handleEvents(Player* player, SDL_Event* e)
+{
+	// If a key is pressed
+	if(e->type == SDL_KEYDOWN && e->key.repeat == 0){
+		switch(e->key.keysym.sym){
+			case SDLK_UP: 
+				switch(player->lane){
+					case LANEPOS_1:
+						break;
+					case LANEPOS_2:
+						player->lane = LANEPOS_1;
+						break;
+					case LANEPOS_3:
+						player->lane = LANEPOS_2;
+						break;
+				}
+				break;
+				
+			case SDLK_DOWN: 
+				switch(player->lane){
+					case LANEPOS_1:
+						player->lane = LANEPOS_2;
+						break;
+					case LANEPOS_2:
+						player->lane = LANEPOS_3;
+						break;
+					case LANEPOS_3:
+						break;
+				}
+				break;
+		}
+	}
+	
+	// if a key is released
+	if(e->type == SDL_KEYUP && e->key.repeat == 0){
+		switch(e->key.keysym.sym){
+			case SDLK_UP : break;
+			case SDLK_DOWN : break;	
+		}
+	}
+}
+
+void Player_move(Player* player, int y)
+{
+	check(player != NULL, "ERROR : Invalid Player!");
+	
+	player->position.y = y - player->collider.h;
+	player->collider.y = player->position.y;
+	
+error:
 	return;
 }
