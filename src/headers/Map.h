@@ -36,6 +36,7 @@ typedef struct Map_Object{
 	SDL_Rect collider;
 	Map_Texture texture_type;
 	bool to_render;
+	bool collided; // for collectibles
 }Map_Object;
 
 typedef struct Map{
@@ -63,6 +64,8 @@ void Map_render(Map* map, Player* cyborg, Player* villian, SDL_Renderer* rendere
 void Map_renderQueue(Map* map,Queue* q, SDL_Renderer* renderer); // Map Rendering helper function for rendering individual queues
 void Map_destroy(Map* map);
 
-
+bool checkCollision(SDL_Rect* a, SDL_Rect* b); // function to check collision
+void Map_checkQueueCollision(Queue* a, SDL_Rect* player_collider);
+void Map_checkCollisions(Map* map, Player* player);
 
 #endif

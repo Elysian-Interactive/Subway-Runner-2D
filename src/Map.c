@@ -101,7 +101,7 @@ void Map_renderQueue(Map* map, Queue* q, SDL_Renderer* renderer)
 {	
 	// Rendering all the Map Vehicles
 	QUEUE_FOREACH(q, cur){
-		if(MO(cur->value)->to_render){
+		if(MO(cur->value)->to_render && !(MO(cur->value)->collided)){
 			Texture_render(renderer, &(map->textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
 		}
 	}
@@ -136,7 +136,13 @@ Map_Object* Map_createObject(int x, int y, int w, int h, Map_Texture type)
 	
 	temp->texture_type = type;
 	
-	temp->to_render = true;
+	if(x > MAP_WIDTH){
+		temp->to_render = false;
+	} else {
+		temp->to_render = true;
+	}
+	
+	temp->collided = false;
 	
 	return temp;
 error:
@@ -167,7 +173,38 @@ error:
 
 void Map_spawnObjects(Map* map)
 {
+	check(map != NULL, "ERROR : Invalid Map!");
 	
+	Map_Object* coach = NULL;
+	Map_Object* money = NULL;
+	int i = 0;
+	
+	// Setting up Beginning Scene
+	for(i = 1;i < 5;i++){
+		if(i % 2 != 0){			
+			coach = Map_createObject((MAP_WIDTH * (i)) / 2, LANEPOS_1 - 33, 206, 57, MAP_COACHTEXTURE);
+			check(coach != NULL, "ERROR : Failed to create the map object!");
+			Map_addObject(map, coach, MAP_OBSTACLE);
+			
+			coach = Map_createObject((MAP_WIDTH * (i)) / 2, LANEPOS_3 - 33, 206, 57, MAP_COACHTEXTURE);
+			check(coach != NULL, "ERROR : Failed to create the map object!");
+			Map_addObject(map, coach, MAP_OBSTACLE);	
+		}
+		else{
+			coach = Map_createObject(MAP_WIDTH * (i / 2), LANEPOS_2 - 33, 206, 57, MAP_COACHTEXTURE);
+			check(coach != NULL, "ERROR : Failed to create the map object!");
+			Map_addObject(map, coach, MAP_OBSTACLE);
+		}
+		
+	}
+	
+
+	money = Map_createObject(MAP_WIDTH / 2, LANEPOS_2 - 8, 24, 24, MAP_MONEYTEXTURE);
+	check(money != NULL, "ERROR : Failed to create the map object!");
+	Map_addObject(map, money, MAP_COLLECTIBLE);
+
+error:
+	return;
 }
 
 // Simple Function to Deallocate memory from the Map Object datatype
@@ -197,28 +234,86 @@ error:
 
 void Map_despawnFromQueue(Map* map, Queue* q, const char* queue_name, int speed_offset)
 {
-	check(q != NULL, "ERROR : Invalid %s Queue", queue_name);
 	
 	int no_despawn = 0;
 	
 	// Switching off rendering on objects out of the screen
 	QUEUE_FOREACH(q, cur){
-		if(MO(cur->value)->collider.x < -((int)Texture_getWidth(&(map->textures[MO(cur->value)->texture_type])))){
-			MO(cur->value)->to_render = false;
+		// if(MO(cur->value)->collider.x < -((int)Texture_getWidth(&(map->textures[MO(cur->value)->texture_type])))){
+		
+		Map_Object* o = MO(cur->value);
+		
+		if(!(o->collided) && !(o->to_render) && o->collider.x < MAP_WIDTH && o->collider.x > -(o->collider.w)){
+			o->to_render = true;
+		} else if(o->collider.x < -(o->collider.w)){
+			o->to_render = false;
 			no_despawn++;
 		}
-		else{
-			// We decrement the postion of the objects by the given offset
-			// Values have to decremented regardless whether they are being renderer or not
-			MO(cur->value)->collider.x -= speed_offset;
-		}
+		
+		// We decrement the postion of the objects by the given offset
+		// Values have to decremented regardless whether they are being renderer or not
+		o->collider.x -= speed_offset;
+		
 	}
+	
 	// Cleaning up the objects to be despawned
 	for(int i = 0;i < no_despawn;i++){
 		Map_destroyObject(MO(Queue_pop(q)));
-		// log_info("[INFO] : Items in Vehicle Queue : %d",Queue_count(map->map_vehicles));
 	}
 	
 error:
 	return;
+}
+
+bool checkCollision(SDL_Rect* a, SDL_Rect* b) // only check collision with objects that are being rendererd
+{
+	// The sides of the rectangle
+	int leftA, leftB;
+	int rightA, rightB;
+	int topA, topB;
+	int bottomA, bottomB;
+	
+	// calculate the sides of the rect A
+	leftA = a->x;
+	rightA = a->x + a->w;
+	topA = a->y;
+	bottomA = a->y + a->h;
+	
+	// calculate the sides of the rect B
+	leftB = b->x;
+	rightB  = b->x + b->w;
+	topB = b->y;
+	bottomB = b->y + b->h;
+	
+	// Now we do our separating axis test and if any of the axis from 
+	// either of the boxes are separate then there is not collision else
+	// they will collide
+
+	if(bottomA <= topB) return false;
+	if(topA >= bottomB) return false;
+	if(rightA <= leftB) return false;
+	if(leftA >= rightB) return false;
+	
+	// if none of the sides of A are outside B then they are colliding
+	return true;
+}
+
+void Map_checkQueueCollision(Queue* q, SDL_Rect* player_collider)
+{
+	
+	QUEUE_FOREACH(q, cur){
+		Map_Object* mo = MO(cur->value);
+		
+		if(mo->to_render){
+			if(checkCollision(&(mo->collider), player_collider)){
+				mo->collided = true;
+				mo->to_render = false;
+			} 
+		}
+	}
+}
+
+void Map_checkCollisions(Map* map, Player* player)
+{
+	Map_checkQueueCollision(map->collectibles, &(player->collider));
 }
