@@ -113,18 +113,14 @@ bool loadMedia()
 	r = Map_loadAllMedia(map, renderer);
 
 	// TEMP : Checking Map Object functionality
+	/*
 	Map_Object* train = Map_createObject(SCREEN_WIDTH, LANEPOS_1 - 33, 446, 80, MAP_TRAINTEXTURE);
 	check(train != NULL, "ERROR : Failed to create the map object!");
 	Map_addObject(map, train, MAP_VEHICLE);
+	*/
 	
-	Map_Object* coach = Map_createObject(SCREEN_WIDTH, LANEPOS_3 - 33, 206, 57, MAP_COACHTEXTURE);
-	check(coach != NULL, "ERROR : Failed to create the map object!");
-	Map_addObject(map, coach, MAP_OBSTACLE);
-	
-	Map_Object* money = Map_createObject(SCREEN_WIDTH, LANEPOS_2 - 8, 24, 24, MAP_MONEYTEXTURE);
-	check(money != NULL, "ERROR : Failed to create the map object!");
-	Map_addObject(map, money, MAP_COLLECTIBLE);
-	
+	Map_spawnObjects(map);
+
 	return true;
 error:
 	return false;
@@ -151,6 +147,8 @@ void update()
 	
 	Player_animate(cyborg, timer);
 	Player_animate(villian, timer);
+	
+	Map_checkCollisions(map, cyborg);
 	
 	Map_despawnObjects(map);
 }
