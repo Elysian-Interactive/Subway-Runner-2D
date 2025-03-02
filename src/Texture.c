@@ -71,6 +71,7 @@ void Texture_render(SDL_Renderer* renderer, Texture* texture, int x, int y, SDL_
 error:
 	SDL_RenderCopy(renderer, texture->texture, NULL, &render_quad); // This is in the case the clip is not provided 
 }
+
 void Texture_renderEx(SDL_Renderer* renderer, Texture* texture, int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip)
 {
 	// Added more functionality :

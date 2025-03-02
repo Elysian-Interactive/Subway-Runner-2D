@@ -11,6 +11,7 @@ all: compile link
 debug: CFLAGS += -DNDEBUG
 debug: all
 
+release: CFLAGS = -Isrc/headers -O2
 release: LIBS += -mwindows
 release: all
 
