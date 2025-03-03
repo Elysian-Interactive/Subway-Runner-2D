@@ -65,7 +65,7 @@ void Map_renderQueue(Map* map,Queue* q, SDL_Renderer* renderer); // Map Renderin
 void Map_destroy(Map* map);
 
 bool checkCollision(SDL_Rect* a, SDL_Rect* b); // function to check collision
-void Map_checkQueueCollision(Queue* a, SDL_Rect* player_collider);
+void Map_checkQueueCollision(Queue* a, SDL_Rect* player_collider, bool dont_render_on_collision);
 void Map_checkCollisions(Map* map, Player* player);
 
 #endif

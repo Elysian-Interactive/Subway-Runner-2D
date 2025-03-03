@@ -25,6 +25,7 @@ int counted_frames = 0;
 
 // Other Variables
 Player* cyborg;
+Player_lane prev_lane;
 Player* villian;
 Map* map;
 
@@ -135,6 +136,7 @@ void handleEvents()
 			quit = true;
 		}
 		
+		prev_lane = cyborg->lane;
 		Player_handleEvents(cyborg, &e);
 		
 	}	
@@ -143,7 +145,10 @@ void handleEvents()
 void update()
 {
 	// Update Player Position
-	Player_move(cyborg, (int)(cyborg->lane + LANE_WIDTH / 2));
+	if(prev_lane != cyborg->lane){ // Only move when a change occurs
+		Player_move(cyborg, (int)(cyborg->lane + LANE_WIDTH / 2));
+	}
+	
 	
 	Player_animate(cyborg, timer);
 	Player_animate(villian, timer);

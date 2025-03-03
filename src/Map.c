@@ -82,6 +82,7 @@ void Map_render(Map* map, Player* cyborg, Player* villian, SDL_Renderer* rendere
 	Texture_render(renderer, &(map->textures[MAP_BGTEXTURE]), gMap_scrolling_offset + Texture_getWidth(&(map->textures[MAP_BGTEXTURE])), 0, NULL); 
 
 	// Rendering through the various object queues
+	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // Collectibles rects are blue
 	Map_renderQueue(map,map->collectibles, renderer);
 	
 	// Render the villian
@@ -90,6 +91,10 @@ void Map_render(Map* map, Player* cyborg, Player* villian, SDL_Renderer* rendere
 	cyborg->state = PLAYER_RUNNING;
 	Cyborg_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
 	
+	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);// Player Rect is green 
+	SDL_RenderDrawRect(renderer, &(cyborg->collider)); 
+	
+	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Obstacles and vehicles Rects are red
 	Map_renderQueue(map,map->obstacles, renderer);
 	Map_renderQueue(map,map->vehicles, renderer);
 
@@ -99,12 +104,23 @@ error:
 
 void Map_renderQueue(Map* map, Queue* q, SDL_Renderer* renderer)
 {	
-	// Rendering all the Map Vehicles
-	QUEUE_FOREACH(q, cur){
-		if(MO(cur->value)->to_render && !(MO(cur->value)->collided)){
+	// Rendering all the Map Objects in their respective queues
+	if(q == map->collectibles)
+	{
+		QUEUE_FOREACH(q, cur){
+			if(MO(cur->value)->to_render && !(MO(cur->value)->collided)){
 			Texture_render(renderer, &(map->textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
+			SDL_RenderDrawRect(renderer, &(MO(cur->value)->collider));
+			}
 		}
-	}
+	}else{
+		QUEUE_FOREACH(q, cur){
+			if(MO(cur->value)->to_render){
+			Texture_render(renderer, &(map->textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
+			SDL_RenderDrawRect(renderer, &(MO(cur->value)->collider));
+			}
+		}
+	}	
 }
 
 void Map_destroy(Map* map)
@@ -198,10 +214,18 @@ void Map_spawnObjects(Map* map)
 		
 	}
 	
+	for(int i = 0;i < 5;i++){
+		money = Map_createObject((MAP_WIDTH / 2) + 40 * (i), LANEPOS_2 - 8, 24, 24, MAP_MONEYTEXTURE);
+		check(money != NULL, "ERROR : Failed to create the map object!");
+		Map_addObject(map, money, MAP_COLLECTIBLE);
+	}
+	
+	for(int i = 0;i < 5;i++){
+		money = Map_createObject(MAP_WIDTH + 40 * (i), LANEPOS_3 - 8, 24, 24, MAP_MONEYTEXTURE);
+		check(money != NULL, "ERROR : Failed to create the map object!");
+		Map_addObject(map, money, MAP_COLLECTIBLE);
+	}
 
-	money = Map_createObject(MAP_WIDTH / 2, LANEPOS_2 - 8, 24, 24, MAP_MONEYTEXTURE);
-	check(money != NULL, "ERROR : Failed to create the map object!");
-	Map_addObject(map, money, MAP_COLLECTIBLE);
 
 error:
 	return;
@@ -298,7 +322,7 @@ bool checkCollision(SDL_Rect* a, SDL_Rect* b) // only check collision with objec
 	return true;
 }
 
-void Map_checkQueueCollision(Queue* q, SDL_Rect* player_collider)
+void Map_checkQueueCollision(Queue* q, SDL_Rect* player_collider, bool dont_render_on_collision)
 {
 	
 	QUEUE_FOREACH(q, cur){
@@ -307,7 +331,9 @@ void Map_checkQueueCollision(Queue* q, SDL_Rect* player_collider)
 		if(mo->to_render){
 			if(checkCollision(&(mo->collider), player_collider)){
 				mo->collided = true;
-				mo->to_render = false;
+				if(dont_render_on_collision){ // In case its a collecitbles
+					mo->to_render = false; 
+				} 
 			} 
 		}
 	}
@@ -315,5 +341,6 @@ void Map_checkQueueCollision(Queue* q, SDL_Rect* player_collider)
 
 void Map_checkCollisions(Map* map, Player* player)
 {
-	Map_checkQueueCollision(map->collectibles, &(player->collider));
+	Map_checkQueueCollision(map->collectibles, &(player->collider), true);
+	Map_checkQueueCollision(map->obstacles, &(player->collider), false);
 }

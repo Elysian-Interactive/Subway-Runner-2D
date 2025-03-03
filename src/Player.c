@@ -10,8 +10,8 @@ Player* Cyborg_create(int x, int y)
 	
 	temp->state = PLAYER_IDLE;
 	
-	temp->collider.w = 48;
-	temp->collider.h = 48;
+	temp->collider.w = 20;
+	temp->collider.h = 32;
 
 	temp->animation_clip.x = 0;
 	temp->animation_clip.y = 0;
@@ -19,10 +19,10 @@ Player* Cyborg_create(int x, int y)
 	temp->animation_clip.h = 48;
 	
 	temp->position.x = x;
-	temp->position.y = y - temp->collider.h;
+	temp->position.y = y - temp->animation_clip.h;
 	
-	temp->collider.x = x;
-	temp->collider.y = temp->position.y;
+	temp->collider.x = x + 4;
+	temp->collider.y = temp->position.y + 20;
 	
 	temp->lane = LANEPOS_2;
 	
@@ -115,9 +115,9 @@ void Player_animate(Player* player, Timer* timer)
 {
 	check(player != NULL, "ERROR : Invalid Player!");
 	
-	int frames = (int)(Texture_getWidth(&(player->player_textures[player->state])) / player->collider.w);
+	int frames = (int)(Texture_getWidth(&(player->player_textures[player->state])) / player->animation_clip.w);
 	
-	player->animation_clip.x = player->collider.w * (int)((Timer_getTicks(timer) / 120) % frames);
+	player->animation_clip.x = player->animation_clip.w * (int)((Timer_getTicks(timer) / 120) % frames);
 
 error: // fallthrough
 	return;
@@ -169,8 +169,8 @@ void Player_move(Player* player, int y)
 {
 	check(player != NULL, "ERROR : Invalid Player!");
 	
-	player->position.y = y - player->collider.h;
-	player->collider.y = player->position.y;
+	player->position.y = y - player->animation_clip.h;
+	player->collider.y = player->position.y + 18;
 	
 error:
 	return;
