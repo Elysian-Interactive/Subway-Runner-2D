@@ -187,48 +187,155 @@ error:
 	return;
 }
 
-void Map_spawnObjects(Map* map)
+// Function to spawn specific items
+static void Map_spawnCoach(Map* map, int x, int y)
+{
+	Map_Object* coach = Map_createObject(x, y - 33, 206, 57, MAP_COACHTEXTURE); // Y with padding
+	
+	check(coach != NULL, "ERROR : Failed to create the Coach!");
+	Map_addObject(map, coach, MAP_OBSTACLE);
+
+error:
+	return;
+}
+
+static void Map_spawnMoney(Map* map, int x, int y)
+{
+	Map_Object* money = Map_createObject(x, y - 8, 24, 24, MAP_MONEYTEXTURE); // Y with padding
+
+	check(money != NULL, "ERROR : Failed to create the Money!");
+	Map_addObject(map, money, MAP_COLLECTIBLE);
+	
+error:
+	return;
+}
+
+static void Map_spawnTrain(Map* map, int x, int y)
+{
+	Map_Object* train = Map_createObject(x, y - 33, 446, 60, MAP_TRAINTEXTURE);
+	
+	check(train != NULL, "ERROR : Failed to create the map object!");
+	Map_addObject(map, train, MAP_VEHICLE);
+	
+error:
+	return;
+}
+
+static void Map_Scene1(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
-	Map_Object* coach = NULL;
-	Map_Object* money = NULL;
 	int i = 0;
+	int j = 0;
+	int money_lane = LANEPOS_3;
 	
 	// Setting up Beginning Scene
-	for(i = 1;i < 5;i++){
-		if(i % 2 != 0){			
-			coach = Map_createObject((MAP_WIDTH * (i)) / 2, LANEPOS_1 - 33, 206, 57, MAP_COACHTEXTURE);
-			check(coach != NULL, "ERROR : Failed to create the map object!");
-			Map_addObject(map, coach, MAP_OBSTACLE);
-			
-			coach = Map_createObject((MAP_WIDTH * (i)) / 2, LANEPOS_3 - 33, 206, 57, MAP_COACHTEXTURE);
-			check(coach != NULL, "ERROR : Failed to create the map object!");
-			Map_addObject(map, coach, MAP_OBSTACLE);	
+	for(i = 1;i < 4;i++){
+		Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_1);
+		Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_3);
+		Map_spawnCoach(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) ,LANEPOS_2);	
+	}	
+	
+	// Additional coaches
+	Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_2);	
+	Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_3);
+
+	// Spawning Money at the right place
+	for(i = 1;i < 4;i++){
+		for(j = 0;j < 5;j++){
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_2);
 		}
-		else{
-			coach = Map_createObject(MAP_WIDTH * (i / 2), LANEPOS_2 - 33, 206, 57, MAP_COACHTEXTURE);
-			check(coach != NULL, "ERROR : Failed to create the map object!");
-			Map_addObject(map, coach, MAP_OBSTACLE);
+
+		if(i % 2 == 0) money_lane = LANEPOS_3;
+		else money_lane = LANEPOS_1;
+		
+		for(j = 0;j < 5; j++){
+			Map_spawnMoney(map, (int)(((MAP_WIDTH / 2) * (2 * i + 1)) + 40 * j), money_lane);
+		}
+	}
+	
+	for(j = 0;j < 5;j++){
+		Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_1);
+	}
+	
+error:
+	return;
+}
+
+static void Map_Scene2(Map* map)
+{
+	check(map != NULL, "ERROR : Invalid Map!");
+	
+	int i = 0;
+	int j = 0;
+	int money_lane = LANEPOS_3;
+	
+	// Setting up Beginning Scene
+	for(i = 1;i < 4;i++){		
+		Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_1);
+		Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_3);
+		Map_spawnCoach(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) ,LANEPOS_2);	
+	}	
+	
+	// Additional coaches
+	Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_1);	
+	Map_spawnCoach(map, (MAP_WIDTH * (i)), LANEPOS_2);
+	
+	// Spawning Money at the right places
+	for(i = 1;i < 4;i++){
+	
+		for(j = 0;j < 5;j++){
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_2);
 		}
 		
+		if(i % 2 == 0) money_lane = LANEPOS_1;
+		else money_lane = LANEPOS_3;
+		
+		for(j = 0;j < 5; j++){
+			Map_spawnMoney(map, (int)(((MAP_WIDTH / 2) * (2 * i + 1)) + 40 * j), money_lane);
+		}
 	}
 	
-	for(int i = 0;i < 5;i++){
-		money = Map_createObject((MAP_WIDTH / 2) + 40 * (i), LANEPOS_2 - 8, 24, 24, MAP_MONEYTEXTURE);
-		check(money != NULL, "ERROR : Failed to create the map object!");
-		Map_addObject(map, money, MAP_COLLECTIBLE);
+	for(j = 0;j < 5;j++){
+		Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_3);
 	}
 	
-	for(int i = 0;i < 5;i++){
-		money = Map_createObject(MAP_WIDTH + 40 * (i), LANEPOS_3 - 8, 24, 24, MAP_MONEYTEXTURE);
-		check(money != NULL, "ERROR : Failed to create the map object!");
-		Map_addObject(map, money, MAP_COLLECTIBLE);
+error:
+	return;
+}
+
+static void Map_Scene3(Map* map)
+{
+	check(map != NULL, "ERROR : Invalid Map!");
+	
+	int i = 0;
+	
+	for(i = 1;i < 4;i++){
+		if(i % 2 == 0){
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_2);
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_3);
+		}
+		else{
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_1);
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_2);
+		}
 	}
 
 
 error:
 	return;
+}
+
+void Map_spawnObjects(Map* map)
+{
+	if(Queue_count(map->obstacles) == 0 && Queue_count(map->collectibles) == 0){
+		// Map_Scene3(map);
+	}
+	
+	if(Queue_count(map->vehicles) == 0){
+		Map_Scene3(map);
+	}
+	
 }
 
 // Simple Function to Deallocate memory from the Map Object datatype

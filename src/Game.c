@@ -1,4 +1,3 @@
-#include <SDL2/SDL_mixer.h> 
 #include <Game.h>
 #include <Texture.h>
 #include <Player.h>
@@ -113,14 +112,9 @@ bool loadMedia()
 	// Loading map media
 	r = Map_loadAllMedia(map, renderer);
 
-	// TEMP : Checking Map Object functionality
-	/*
-	Map_Object* train = Map_createObject(SCREEN_WIDTH, LANEPOS_1 - 33, 446, 80, MAP_TRAINTEXTURE);
-	check(train != NULL, "ERROR : Failed to create the map object!");
-	Map_addObject(map, train, MAP_VEHICLE);
-	*/
 	
-	Map_spawnObjects(map);
+	
+	// Map_spawnObjects(map);
 
 	return true;
 error:
@@ -144,6 +138,8 @@ void handleEvents()
 
 void update()
 {
+	Map_spawnObjects(map);
+	
 	// Update Player Position
 	if(prev_lane != cyborg->lane){ // Only move when a change occurs
 		Player_move(cyborg, (int)(cyborg->lane + LANE_WIDTH / 2));
