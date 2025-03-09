@@ -4,6 +4,9 @@ int gMap_scrolling_offset = 0;
 int gMap_vehicles_speed_offset = 2; 
 int gMap_stationary_objects_speed_offset = 1;
 
+// Holding our differnt scenes
+Map_sceneX scenes[4] = {Map_scene1, Map_scene2, Map_scene3, Map_scene4};
+
 Map* Map_create(int x, int y, int w, int h)
 {
 	Map* temp = malloc(sizeof(Map));
@@ -82,7 +85,7 @@ void Map_render(Map* map, Player* cyborg, Player* villian, SDL_Renderer* rendere
 	Texture_render(renderer, &(map->textures[MAP_BGTEXTURE]), gMap_scrolling_offset + Texture_getWidth(&(map->textures[MAP_BGTEXTURE])), 0, NULL); 
 
 	// Rendering through the various object queues
-	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // Collectibles rects are blue
+	//SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); // Collectibles rects are blue
 	Map_renderQueue(map,map->collectibles, renderer);
 	
 	// Render the villian
@@ -91,10 +94,10 @@ void Map_render(Map* map, Player* cyborg, Player* villian, SDL_Renderer* rendere
 	cyborg->state = PLAYER_RUNNING;
 	Cyborg_render(cyborg, renderer, cyborg->position.x, cyborg->position.y);
 	
-	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);// Player Rect is green 
-	SDL_RenderDrawRect(renderer, &(cyborg->collider)); 
+	//SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);// Player Rect is green 
+	//SDL_RenderDrawRect(renderer, &(cyborg->collider)); 
 	
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Obstacles and vehicles Rects are red
+	//SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Obstacles and vehicles Rects are red
 	Map_renderQueue(map,map->obstacles, renderer);
 	Map_renderQueue(map,map->vehicles, renderer);
 
@@ -110,14 +113,14 @@ void Map_renderQueue(Map* map, Queue* q, SDL_Renderer* renderer)
 		QUEUE_FOREACH(q, cur){
 			if(MO(cur->value)->to_render && !(MO(cur->value)->collided)){
 			Texture_render(renderer, &(map->textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
-			SDL_RenderDrawRect(renderer, &(MO(cur->value)->collider));
+			//SDL_RenderDrawRect(renderer, &(MO(cur->value)->collider));
 			}
 		}
 	}else{
 		QUEUE_FOREACH(q, cur){
 			if(MO(cur->value)->to_render){
 			Texture_render(renderer, &(map->textures[MO(cur->value)->texture_type]), MO(cur->value)->collider.x , MO(cur->value)->collider.y, NULL);
-			SDL_RenderDrawRect(renderer, &(MO(cur->value)->collider));
+			//SDL_RenderDrawRect(renderer, &(MO(cur->value)->collider));
 			}
 		}
 	}	
@@ -221,7 +224,7 @@ error:
 	return;
 }
 
-static void Map_Scene1(Map* map)
+void Map_scene1(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
@@ -262,7 +265,7 @@ error:
 	return;
 }
 
-static void Map_Scene2(Map* map)
+void Map_scene2(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
@@ -304,13 +307,13 @@ error:
 	return;
 }
 
-static void Map_Scene3(Map* map)
+void Map_scene3(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
 	int i = 0;
 	
-	for(i = 1;i < 4;i++){
+	for(i = 1;i < 5;i++){
 		if(i % 2 == 0){
 			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_2);
 			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_3);
@@ -320,22 +323,66 @@ static void Map_Scene3(Map* map)
 			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_2);
 		}
 	}
+	
+	for(i = 1;i < 3;i++){
+		for(int j = 0;j < 6;j++){
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_1);
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_2);
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_3);
+		}
+		for(int j = 0;j < 6;j++){
+			Map_spawnMoney(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) + (40 * j), LANEPOS_1);
+			Map_spawnMoney(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) + (40 * j), LANEPOS_2);
+			Map_spawnMoney(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) + (40 * j), LANEPOS_3);
+		}
+	}	
+
+error:
+	return;
+}
+
+void Map_scene4(Map* map)
+{
+	check(map != NULL, "ERROR : Invalid Map!");
+	
+	int i = 0;
+	
+	for(i = 1;i < 5;i++){
+		if(i % 2 == 0){
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_1);
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_2);
+		}
+		else{
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_2);
+			Map_spawnTrain(map, MAP_WIDTH * i, LANEPOS_3);
+		}
+	}
+	
+	for(i = 1;i < 3;i++){
+		for(int j = 0;j < 6;j++){
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_1);
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_2);
+			Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_3);
+		}
+		for(int j = 0;j < 6;j++){
+			Map_spawnMoney(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) + (40 * j), LANEPOS_1);
+			Map_spawnMoney(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) + (40 * j), LANEPOS_2);
+			Map_spawnMoney(map, (int)((MAP_WIDTH / 2) * (2 * i + 1)) + (40 * j), LANEPOS_3);
+		}
+	}	
 
 
 error:
 	return;
 }
 
-void Map_spawnObjects(Map* map)
+void Map_spawnObjects(Map* map, Timer* timer)
 {
-	if(Queue_count(map->obstacles) == 0 && Queue_count(map->collectibles) == 0){
-		// Map_Scene3(map);
-	}
 	
-	if(Queue_count(map->vehicles) == 0){
-		Map_Scene3(map);
-	}
-	
+	if(Queue_count(map->obstacles) == 0 && Queue_count(map->collectibles) == 0 && Queue_count(map->vehicles) == 0){
+		// Randomly choose a function based on the timer
+		(scenes[Timer_getTicks(timer) % sizeof(Map_sceneX)])(map);
+	}	
 }
 
 // Simple Function to Deallocate memory from the Map Object datatype
@@ -450,4 +497,5 @@ void Map_checkCollisions(Map* map, Player* player)
 {
 	Map_checkQueueCollision(map->collectibles, &(player->collider), true);
 	Map_checkQueueCollision(map->obstacles, &(player->collider), false);
+	Map_checkQueueCollision(map->vehicles, &(player->collider), false);
 }

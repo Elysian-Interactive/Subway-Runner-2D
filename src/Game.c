@@ -138,13 +138,12 @@ void handleEvents()
 
 void update()
 {
-	Map_spawnObjects(map);
+	Map_spawnObjects(map, timer);
 	
 	// Update Player Position
 	if(prev_lane != cyborg->lane){ // Only move when a change occurs
 		Player_move(cyborg, (int)(cyborg->lane + LANE_WIDTH / 2));
 	}
-	
 	
 	Player_animate(cyborg, timer);
 	Player_animate(villian, timer);
