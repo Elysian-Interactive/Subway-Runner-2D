@@ -78,5 +78,10 @@ void Map_scene1(Map* map);
 void Map_scene2(Map* map);
 void Map_scene3(Map* map);
 void Map_scene4(Map* map);
+// Transition between scenes
+void Map_transition1(Map* map, int offset);
+void Map_transition2(Map* map, int offset);
+void Map_transition3(Map* map, int offset);
+void Map_transition4(Map* map, int offset);
 
 #endif

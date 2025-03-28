@@ -376,6 +376,42 @@ error:
 	return;
 }
 
+void Map_transition1(Map* map, int offset)
+{
+	check(map != NULL, "ERROR : Invalid Map!");
+
+	
+error:
+	return;
+}
+
+void Map_transition2(Map* map, int offset)
+{
+	check(map != NULL, "ERROR : Invalid Map!");
+
+	
+error:
+	return;
+}
+
+void Map_transition3(Map* map, int offset)
+{
+	check(map != NULL, "ERROR : Invalid Map!");
+
+	
+error:
+	return;
+}
+
+void Map_transition4(Map* map, int offset)
+{
+	check(map != NULL, "ERROR : Invalid Map!");
+
+	
+error:
+	return;
+}
+
 void Map_spawnObjects(Map* map, Timer* timer)
 {
 	
