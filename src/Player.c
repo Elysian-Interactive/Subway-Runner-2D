@@ -26,6 +26,8 @@ Player* Cyborg_create(int x, int y)
 	
 	temp->lane = LANEPOS_2;
 	
+	temp->score = 0;
+	
 	return temp;
 error:
 	return NULL;

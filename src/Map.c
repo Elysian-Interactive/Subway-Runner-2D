@@ -60,6 +60,9 @@ bool Map_loadAllMedia(Map* map, SDL_Renderer* renderer)
 	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Obstacles/Coach2.png", MAP_COACHTEXTURE);
 	check(r != false, "ERROR : Failed to load Map Texture");
 	
+	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Obstacles/Powerline.png", MAP_POWLINETEXTURE);
+	check(r != false, "ERROR : Failed to load Map Texture");
+	
 	r = Map_loadTexture(map, renderer, "Assets/Textures/Map/Collectibles/Money.png", MAP_MONEYTEXTURE);
 	check(r != false, "ERROR : Failed to load Map Texture");
 
@@ -217,14 +220,25 @@ static void Map_spawnTrain(Map* map, int x, int y)
 {
 	Map_Object* train = Map_createObject(x, y - 33, 446, 60, MAP_TRAINTEXTURE);
 	
-	check(train != NULL, "ERROR : Failed to create the map object!");
+	check(train != NULL, "ERROR : Failed to create the train!");
 	Map_addObject(map, train, MAP_VEHICLE);
 	
 error:
 	return;
 }
 
-void Map_scene1(Map* map)
+static void Map_spawnPowerLine(Map* map, int x, int y)
+{
+	Map_Object* powerline = Map_createObject(x, y, 69, 192, MAP_POWLINETEXTURE);
+	
+	check(powerline != NULL, "ERROR : Failed to create the powerline!");
+	Map_addObject(map, powerline, MAP_OBSTACLE);
+
+error:
+	return;
+}
+
+int Map_scene1(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
@@ -261,11 +275,12 @@ void Map_scene1(Map* map)
 		Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_1);
 	}
 	
+	return i;
 error:
-	return;
+	return 0;
 }
 
-void Map_scene2(Map* map)
+int Map_scene2(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
@@ -303,11 +318,12 @@ void Map_scene2(Map* map)
 		Map_spawnMoney(map, (MAP_WIDTH * i) + (40 * j), LANEPOS_3);
 	}
 	
+	return i;
 error:
-	return;
+	return 0;
 }
 
-void Map_scene3(Map* map)
+int Map_scene3(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
@@ -337,11 +353,12 @@ void Map_scene3(Map* map)
 		}
 	}	
 
+	return i;
 error:
-	return;
+	return 0;
 }
 
-void Map_scene4(Map* map)
+int Map_scene4(Map* map)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
 	
@@ -371,14 +388,16 @@ void Map_scene4(Map* map)
 		}
 	}	
 
-
+	return i;
 error:
-	return;
+	return 0;
 }
 
 void Map_transition1(Map* map, int offset)
 {
 	check(map != NULL, "ERROR : Invalid Map!");
+	
+	Map_spawnPowerLine(map, (MAP_WIDTH) * offset, LANEPOS_1);
 
 	
 error:
@@ -417,7 +436,8 @@ void Map_spawnObjects(Map* map, Timer* timer)
 	
 	if(Queue_count(map->obstacles) == 0 && Queue_count(map->collectibles) == 0 && Queue_count(map->vehicles) == 0){
 		// Randomly choose a function based on the timer
-		(scenes[Timer_getTicks(timer) % sizeof(Map_sceneX)])(map);
+		int offset = (scenes[Timer_getTicks(timer) % sizeof(Map_sceneX)])(map);
+		Map_transition1(map, offset);
 	}	
 }
 
@@ -512,26 +532,78 @@ bool checkCollision(SDL_Rect* a, SDL_Rect* b) // only check collision with objec
 	return true;
 }
 
-void Map_checkQueueCollision(Queue* q, SDL_Rect* player_collider, bool dont_render_on_collision)
+void Map_checkQueueCollision(Queue* q, Player* player, bool dont_render_on_collision)
 {
 	
 	QUEUE_FOREACH(q, cur){
 		Map_Object* mo = MO(cur->value);
 		
 		if(mo->to_render){
-			if(checkCollision(&(mo->collider), player_collider)){
+			if(checkCollision(&(mo->collider), &(player->collider))){
 				mo->collided = true;
 				if(dont_render_on_collision){ // In case its a collecitbles
 					mo->to_render = false; 
+					player->score++;
+					log_info("Player Score : %d", player->score);
 				} 
 			} 
 		}
 	}
 }
 
+void Map_checkCollectibleCollision(Queue* q, Player* player)
+{
+	QUEUE_FOREACH(q, cur){
+		Map_Object* mo = MO(cur->value);
+		
+		if(mo->to_render){
+			if(checkCollision(&(mo->collider), &(player->collider))){
+				mo->collided = true;
+				mo->to_render = false; 
+				player->score++;
+				log_info("Player Score : %d", player->score);
+			} 
+		} 
+	}
+}
+
+void Map_checkObstacleCollision(Queue* q, Player* player)
+{
+	QUEUE_FOREACH(q, cur){
+		Map_Object* mo = MO(cur->value);
+		
+		if(mo->to_render){
+			if(checkCollision(&(mo->collider), &(player->collider))){
+				mo->collided = true;
+				log_info("Collided with obstacle!");
+			} 
+		} 
+	}
+}
+
+void Map_checkVehicleCollision(Queue* q, Player* player)
+{
+	QUEUE_FOREACH(q, cur){
+		Map_Object* mo = MO(cur->value);
+		
+		if(mo->to_render){
+			if(checkCollision(&(mo->collider), &(player->collider))){
+				mo->collided = true;
+				log_info("Collided with vehicle!");
+			} 
+		} 
+	}
+}
+
+
 void Map_checkCollisions(Map* map, Player* player)
 {
-	Map_checkQueueCollision(map->collectibles, &(player->collider), true);
-	Map_checkQueueCollision(map->obstacles, &(player->collider), false);
-	Map_checkQueueCollision(map->vehicles, &(player->collider), false);
+	check(map != NULL, "ERROR : Invalid Map!");
+	
+	Map_checkCollectibleCollision(map->collectibles, player);
+	Map_checkObstacleCollision(map->obstacles, player);
+	Map_checkVehicleCollision(map->vehicles, player);
+
+error:
+	return;
 }

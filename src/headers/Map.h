@@ -23,6 +23,7 @@ typedef enum Map_Texture{
 	MAP_TRAINTEXTURE, 
 	MAP_COACHTEXTURE,
 	MAP_MONEYTEXTURE,
+	MAP_POWLINETEXTURE,
 	MAP_ALLTEXTURES
 }Map_Texture;
 
@@ -49,7 +50,7 @@ typedef struct Map{
 }Map;
 
 // Function pointer for differnt scenes
-typedef void (*Map_sceneX) (Map* map);
+typedef int (*Map_sceneX) (Map* map);
 
 extern Map_sceneX scenes[4]; // Holds the functions for different scens
 extern int gMap_vehicles_speed_offset; // Determines how fast the vehicles should move
@@ -70,14 +71,18 @@ void Map_renderQueue(Map* map,Queue* q, SDL_Renderer* renderer); // Map Renderin
 void Map_destroy(Map* map);
 
 bool checkCollision(SDL_Rect* a, SDL_Rect* b); // function to check collision
-void Map_checkQueueCollision(Queue* a, SDL_Rect* player_collider, bool dont_render_on_collision);
+void Map_checkQueueCollision(Queue* a, Player* player, bool dont_render_on_collision);
+void Map_checkCollectibleCollision(Queue* a, Player* player);
+void Map_checkObstacleCollision(Queue* a, Player* player);
+void Map_checkVehicleCollision(Queue* a, Player* player);
 void Map_checkCollisions(Map* map, Player* player);
 
 // Map Scenes
-void Map_scene1(Map* map);
-void Map_scene2(Map* map);
-void Map_scene3(Map* map);
-void Map_scene4(Map* map);
+int Map_scene1(Map* map);
+int Map_scene2(Map* map);
+int Map_scene3(Map* map);
+int Map_scene4(Map* map);
+
 // Transition between scenes
 void Map_transition1(Map* map, int offset);
 void Map_transition2(Map* map, int offset);

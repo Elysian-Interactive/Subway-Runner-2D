@@ -26,6 +26,7 @@ typedef struct Player{
 	SDL_Point position;
 	SDL_Rect animation_clip;
 	Player_lane lane;
+	unsigned int score;
 }Player;
 
 Player* Cyborg_create(int x, int y);
